@@ -110,7 +110,7 @@ class ProjectDashboardTest {
     void addItem() {
         Project project = projects.save(new Project("항목 추가 검증", "A수행사"));
 
-        ChecklistItem added = itemService.add(project.getId(), "착수", "품의서", false);
+        ChecklistItem added = itemService.add(project.getId(), "착수", "품의서", false, null);
 
         assertThat(added.getId()).isNotNull();
         assertThat(added.getPhase()).isEqualTo("착수");
@@ -124,7 +124,7 @@ class ProjectDashboardTest {
     void addItemRejectsPmoPhase() {
         Project project = projects.save(new Project("PMO 추가 제한 검증", "A수행사"));
 
-        assertThatThrownBy(() -> itemService.add(project.getId(), "PMO", "품의서", false))
+        assertThatThrownBy(() -> itemService.add(project.getId(), "PMO", "품의서", false, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("PMO");
     }
@@ -206,7 +206,7 @@ class ProjectDashboardTest {
     @DisplayName("목록 관리: 산출물 항목을 삭제하면 연결된 제출 이력도 함께 정리된다")
     void removeItem() {
         Project project = projects.save(new Project("항목 삭제 검증", "A수행사"));
-        ChecklistItem added = itemService.add(project.getId(), "착수", "임시 산출물", false);
+        ChecklistItem added = itemService.add(project.getId(), "착수", "임시 산출물", false, null);
 
         itemService.remove(project.getId(), added.getId());
 

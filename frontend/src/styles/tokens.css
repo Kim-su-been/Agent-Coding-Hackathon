@@ -39,6 +39,9 @@
   --space-6: 24px;
   --space-8: 32px;
 
+  /* 레이아웃 — 콘텐츠 최대 폭(넓은 화면에서 양옆 여백을 남기고 가운데 정렬) */
+  --page-max: 1280px;
+
   /* 모서리 반경 — 버튼 8px, 카드 12~16px */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -52,6 +55,8 @@
 
   /* 타이포 위계 */
   --title1: 24px / 34px; /* 화면 최상단 큰 제목, Bold */
+  --title-item: 28px / 38px; /* 상세 화면 산출물 항목·파일 내역 제목, Bold — 사용자 요청으로 24→28px 확대 */
+  --meta-strong: 19px / 28px; /* 상세 화면 단계·마감일 메타, SemiBold — 사용자 요청으로 17→19px 확대 */
   --title-brand: 32px / 44px; /* 상단 브랜드 타이틀(좌측 상단 프로젝트명), ExtraBold — 사용자 요청으로 28→32px 확대 */
   --title2: 22px / 30px; /* 섹션 제목, Bold */
   --subtitle: 18px / 26px; /* 소제목, Bold */

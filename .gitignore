@@ -21,3 +21,4 @@ Thumbs.db
 
 # H2 runtime lock
 data/*.lock.db
+data/*.trace.db

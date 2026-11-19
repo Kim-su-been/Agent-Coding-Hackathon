@@ -16,6 +16,15 @@ export async function listProjects(): Promise<Project[]> {
   return request<Project[]>("/projects");
 }
 
+/** 프로젝트 추가: 기본 세팅대로 템플릿 전체 단계 산출물 목록이 자동 등록된다(REQ-outputhub-014). */
+export async function createProject(body: { name: string; vendor: string }): Promise<Project> {
+  return request<Project>("/projects", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function fetchDashboard(projectId: number): Promise<DashboardView> {
   return request<DashboardView>(`/projects/${projectId}/dashboard`);
 }
@@ -27,7 +36,7 @@ export async function fetchProjectItems(projectId: number): Promise<ItemOption[]
 
 export async function addProjectItem(
   projectId: number,
-  body: { phase: string; itemName: string; required: boolean },
+  body: { phase: string; itemName: string; required: boolean; dueDate: string | null },
 ): Promise<ChecklistRow> {
   return request<ChecklistRow>(`/projects/${projectId}/items`, {
     method: "POST",
@@ -74,6 +83,16 @@ export async function approveNewSuggestion(suggestionId: number): Promise<number
 
 export async function fetchItemDetail(itemId: number): Promise<ItemDetail> {
   return request<ItemDetail>(`/deliverables/${itemId}`);
+}
+
+/** 상세 화면에서 마감일 수정(사용자 요구 2026-11-19). dueDate null 이면 미지정으로 해제. */
+export async function updateDueDate(itemId: number, dueDate: string | null): Promise<string> {
+  const response = await request<StatusView>(`/deliverables/${itemId}/due-date`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dueDate }),
+  });
+  return response.status;
 }
 
 export async function confirmItem(itemId: number): Promise<string> {

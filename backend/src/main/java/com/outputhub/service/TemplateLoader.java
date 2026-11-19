@@ -1,6 +1,7 @@
 package com.outputhub.service;
 
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ public class TemplateLoader {
 
     private static final String TEMPLATE_FILE = "deliverable-templates.yml";
 
-    public record TemplateItem(String phase, String name, boolean required) {
+    public record TemplateItem(String phase, String name, boolean required, LocalDate dueDate) {
     }
 
     /** 단계 필터가 비었으면 전체 단계 목록을, 아니면 해당 단계만 돌려준다. */
@@ -41,9 +42,18 @@ public class TemplateLoader {
             for (Object itemEntry : (List<Object>) stage.get("items")) {
                 Map<String, Object> item = (Map<String, Object>) itemEntry;
                 boolean required = Boolean.TRUE.equals(item.get("required"));
-                result.add(new TemplateItem(phase, (String) item.get("name"), required));
+                result.add(new TemplateItem(phase, (String) item.get("name"), required,
+                        parseDueDate(item.get("due"))));
             }
         }
         return result;
+    }
+
+    /** 기준 마감일(REQ-outputhub-028). due 키가 없거나 빈 값이면 마감일 미지정(null)이다. */
+    private LocalDate parseDueDate(Object due) {
+        if (due == null || due.toString().isBlank()) {
+            return null;
+        }
+        return LocalDate.parse(due.toString().trim());
     }
 }

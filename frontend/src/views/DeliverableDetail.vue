@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { fetchItemDetail, replaceConfirmed } from "../api/client";
+import { fetchItemDetail, replaceConfirmed, updateDueDate } from "../api/client";
 import ReviewModal from "../components/ReviewModal.vue";
+import StatusBadge from "../components/StatusBadge.vue";
+import { useDueDate } from "../composables/useDueDate";
 import { buildAuditHistory, buildMergedHistory, type HistoryEntry } from "../composables/useItemHistory";
 import type { ItemDetail, VersionView } from "../types/model";
 
@@ -18,6 +20,31 @@ const confirmed = computed(() => detail.value?.status === "검토완료");
 const mergedHistory = computed<HistoryEntry[]>(() =>
   detail.value ? buildMergedHistory(detail.value.versions, detail.value.audits) : [],
 );
+
+const { dueBadge } = useDueDate();
+
+/** 마감일이 지났는데 검토완료가 아니면 지연 배지(REQ-outputhub-028). */
+const overdue = computed(() => {
+  if (!detail.value?.dueDate) {
+    return false;
+  }
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return detail.value.status !== "검토완료" && new Date(detail.value.dueDate).getTime() < startOfToday;
+});
+const dueBadgeInfo = computed(() => dueBadge(detail.value?.dueDate ?? null, overdue.value));
+
+/** 마감일 인라인 수정: date 입력 변경 시 바로 저장하고 이력을 다시 내려받는다. */
+async function onDueDateChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  try {
+    await updateDueDate(props.itemId, input.value || null);
+    message.value = "마감일이 저장되었습니다";
+  } catch (e) {
+    message.value = e instanceof Error ? e.message : "마감일 저장에 실패했습니다";
+  }
+  await reload();
+}
 
 /** 검토 전 감사 이력 표. 규칙 매칭 근거(키워드·벡터 유사도)는 감사 이력에서 숨긴다(사용자 요구 2026-11-19). */
 const auditHistory = computed<HistoryEntry[]>(() =>
@@ -67,14 +94,28 @@ onMounted(reload);
   <section v-if="detail" class="detail">
     <button @click="back">← 대시보드</button>
     <header>
-      <h2>{{ detail.itemName }} <span class="badge">{{ detail.status }}</span></h2>
-      <p class="sub">단계: {{ detail.phase }} · 필수: {{ detail.required ? "예" : "아니오" }} · PMO 단일 역할(로그인 없음)</p>
-      <p v-if="detail.supplementReason" class="reason">보완 사유: {{ detail.supplementReason }}</p>
+      <!-- 산출물 항목과 검토상태를 한 카드 박스에 묶어 눈에 띄게 보여 준다(사용자 요구 2026-11-19) -->
+      <div class="summary-card">
+        <div class="summary-row">
+          <h2>{{ detail.itemName }}</h2>
+          <StatusBadge :status="detail.status" class="summary-status" />
+        </div>
+        <div class="meta">
+          <span class="meta-item">단계 {{ detail.phase }}</span>
+          <span class="meta-item">
+            마감일
+            <input class="due-input" type="date" :value="detail.dueDate" @change="onDueDateChange" />
+            <span v-if="dueBadgeInfo" :class="['due-badge', dueBadgeInfo.kind]">{{ dueBadgeInfo.label }}</span>
+          </span>
+        </div>
+        <p v-if="detail.supplementReason" class="reason">보완 사유: {{ detail.supplementReason }}</p>
+      </div>
     </header>
 
     <!-- 검토 전(검토 필요·보완 필요): 파일 버전 내역과 감사 이력을 별도 표로 보여준다(REQ-outputhub-024) -->
     <div v-if="!confirmed" class="columns">
-      <div>
+      <!-- 파일 버전 내역을 카드 박스로 감싸 산출물 항목 박스와 대응되게 눈에 띄게 한다(사용자 요구 2026-11-19) -->
+      <div class="panel">
         <h3>파일 버전 내역</h3>
         <table>
           <thead>
@@ -109,9 +150,9 @@ onMounted(reload);
     </div>
 
     <!-- 검토완료: 파일 버전 행이 감사 이력 표와 시간순으로 병합된다(REQ-outputhub-024, AC-024-3) -->
-    <div v-else class="merged">
-      <h3>이력(감사 + 파일 버전)</h3>
-      <p class="hint">검토완료된 항목입니다. 파일 버전 내역이 감사 이력 표와 합쳐져 하나의 이력으로 표시됩니다.</p>
+    <div v-else class="panel merged">
+      <h3 class="section-title">파일 내역</h3>
+      <p class="hint">검토완료된 항목입니다. 파일 내역이 감사 이력 표와 합쳐져 하나의 이력으로 표시됩니다.</p>
       <table>
         <thead><tr><th scope="col">구분</th><th scope="col">동작</th><th scope="col">내용</th><th scope="col">주체</th><th scope="col">일시</th></tr></thead>
         <tbody>
@@ -150,16 +191,31 @@ onMounted(reload);
 </template>
 
 <style scoped>
-header h2 { font: 700 var(--title2); margin: 0; }
+header h2 { font: 700 var(--title-item); margin: 0; }
+/* 산출물 항목·검토상태 요약 카드: 흰 카드에 테두리·그림자로 회색 화면 배경 위에서 눈에 띄게 한다(사용자 요구 2026-11-19) */
+.summary-card { background: var(--surface); border: 1px solid var(--grey-200); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: var(--space-5) var(--space-6); margin-top: var(--space-4); }
+.summary-row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+.summary-status { font: 700 15px/24px var(--font-sans); padding: 6px 14px; }
 h3 { font: 700 var(--subtitle); margin: 0 0 var(--space-2); }
+/* 산출물 항목과 같은 글씨(사용자 요구 2026-11-19): 검토완료 화면의 파일 내역 제목 */
+.section-title { font: 700 var(--title-item); margin: 0 0 var(--space-2); }
+/* 산출물 항목 아래 단계·마감일은 기본 본문보다 크게 보여 주고, 마감일은 인라인 수정 가능(사용자 요구 2026-11-19) */
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-6); margin: var(--space-2) 0 var(--space-1); font: 600 var(--meta-strong) var(--font-sans); color: var(--grey-900); }
+.meta-item { display: inline-flex; align-items: center; gap: var(--space-2); }
+.due-input { width: 150px; font: 600 var(--meta-strong) var(--font-sans); color: var(--grey-900); border: none; border-bottom: 2px solid var(--grey-200); border-radius: 0; padding: 2px 4px; background: transparent; outline: none; }
+.due-input:focus { border-bottom-color: var(--blue-600); }
+.due-badge { font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-sm); }
+.due-badge.overdue { background: var(--red-50); color: var(--red-600); }
+.due-badge.today { background: var(--blue-50); color: var(--blue-600); }
+.due-badge.normal { background: var(--grey-100); color: var(--grey-700); }
 button { border: 1px solid var(--grey-200); background: var(--surface); border-radius: var(--radius-sm); padding: 10px 16px; font: 600 15px/22px var(--font-sans); cursor: pointer; color: var(--grey-700); }
 .review { padding: 6px 12px; font-size: 14px; }
 /* 입력은 테두리 없이 밑줄 스타일 기본, 입력 중(포커스)에 밑줄이 파란색으로 활성화 */
 input { border: none; border-bottom: 2px solid var(--grey-200); border-radius: 0; padding: 8px 4px; font: 400 15px/22px var(--font-sans); color: var(--grey-900); background: transparent; outline: none; }
 input::placeholder { color: var(--grey-500); }
 input:focus { border-bottom-color: var(--blue-600); }
-.badge { background: var(--blue-50); color: var(--blue-600); padding: 4px 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; vertical-align: middle; }
-.sub { color: var(--grey-500); font-size: 13px; line-height: 20px; }
+/* 파일 내역 카드: 표를 박스로 감싸 산출물 항목 박스와 같은 강조로 보여 준다(사용자 요구 2026-11-19) */
+.panel { background: var(--surface); border: 1px solid var(--grey-200); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: var(--space-4) var(--space-5); }
 .reason { color: var(--red-600); }
 .columns { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-top: var(--space-3); }
 .merged { margin-top: var(--space-3); }

@@ -1,40 +1,41 @@
 # 프로젝트별 기본 산출물 목록 템플릿(REQ-outputhub-014).
 # 단계(stage) 순서가 곧 대시보드 표시 순서다. required: 필수 여부.
+# due: 기준 마감일(REQ-outputhub-028, YYYY-MM-DD). 미기술이면 마감일 미지정(주간보고처럼 주기 접수 항목).
 templates:
   - stage: 착수
     items:
-      - { name: 사업수행계획서, required: true }
-      - { name: WBS, required: true }
-      - { name: 인력투입계획서, required: true }
-      - { name: 착수보고서, required: true }
+      - { name: 사업수행계획서, required: true, due: "2026-11-10" }
+      - { name: WBS, required: true, due: "2026-11-13" }
+      - { name: 인력투입계획서, required: true, due: "2026-11-13" }
+      - { name: 착수보고서, required: true, due: "2026-11-14" }
   - stage: 분석
     items:
-      - { name: 요구사항 정의서, required: true }
-      - { name: 요구사항 추적표, required: true }
+      - { name: 요구사항 정의서, required: true, due: "2026-11-20" }
+      - { name: 요구사항 추적표, required: true, due: "2026-11-24" }
   - stage: 설계
     items:
-      - { name: 시스템 구성도, required: true }
-      - { name: 기능 설계서, required: true }
-      - { name: 화면 설계서, required: true }
-      - { name: DB 설계서(ERD), required: true }
-      - { name: 인터페이스 정의서, required: true }
+      - { name: 시스템 구성도, required: true, due: "2026-11-27" }
+      - { name: 기능 설계서, required: true, due: "2026-11-27" }
+      - { name: 화면 설계서, required: true, due: "2026-12-01" }
+      - { name: DB 설계서(ERD), required: true, due: "2026-12-01" }
+      - { name: 인터페이스 정의서, required: true, due: "2026-12-03" }
   - stage: 개발
     items:
-      - { name: 단위테스트 결과서, required: true }
-      - { name: 소스/빌드 안내서, required: true }
+      - { name: 단위테스트 결과서, required: true, due: "2026-12-08" }
+      - { name: 소스/빌드 안내서, required: true, due: "2026-12-10" }
   - stage: 테스트
     items:
-      - { name: 테스트 계획서, required: true }
-      - { name: 통합테스트 시나리오, required: true }
-      - { name: 통합테스트 결과서, required: true }
-      - { name: 보안/점검 조치 결과서, required: true }
+      - { name: 테스트 계획서, required: true, due: "2026-12-14" }
+      - { name: 통합테스트 시나리오, required: true, due: "2026-12-16" }
+      - { name: 통합테스트 결과서, required: true, due: "2026-12-21" }
+      - { name: 보안/점검 조치 결과서, required: true, due: "2026-12-22" }
   - stage: 인수인계 및 종료
     items:
-      - { name: 사용자 매뉴얼, required: true }
-      - { name: 운영자 매뉴얼, required: true }
-      - { name: 운영 인수인계서, required: true }
-      - { name: 종료 보고서, required: true }
-      - { name: 검수 확인서, required: true }
+      - { name: 사용자 매뉴얼, required: true, due: "2026-12-28" }
+      - { name: 운영자 매뉴얼, required: true, due: "2026-12-28" }
+      - { name: 운영 인수인계서, required: true, due: "2026-12-30" }
+      - { name: 종료 보고서, required: true, due: "2027-01-05" }
+      - { name: 검수 확인서, required: true, due: "2027-01-07" }
   - stage: PMO
     items:
       - { name: 주간보고서, required: true }

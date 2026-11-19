@@ -15,30 +15,34 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * REQ-outputhub-004: 임의 파일 100개에 대해 기대 매핑과 서비스 판정의 일치 여부를 샘다.
+ * REQ-outputhub-004: 임의 파일 100개에 대해 기대 매핑과 서비스 판정의 일치 여부와 판정 소요 시간을 샘다.
  * 서비스 판정은 업로드 제안과 같다: 첫 후보, 후보가 없으면 신규(자동등록).
- * 기대효과 "검증 가능성"이 인용하는 매핑 일치율 수치의 재현 근거다.
+ * 기대효과 "검증 가능성"이 인용하는 매핑 일치율·소요 시간 수치의 재현 근거다.
  */
 class MatchAccuracyTest {
 
     private static final String NEW_REGISTRATION = "신규(자동등록)";
     private static final double MATCH_FLOOR_PERCENT = 90.0;
     private static final int EXPECTED_CASE_COUNT = 100;
+    private static final double NANOS_TO_MILLIS = 1_000_000.0;
 
     private final MatchService matchService = new MatchService();
     private final List<MatchService.ItemRef> registry = registry();
 
     @Test
-    @DisplayName("임의 파일 100개에서 기대 매핑과 서비스 판정 일치율이 실측 기준(90%) 이상이다")
+    @DisplayName("임의 파일 100개에서 기대 매핑과 서비스 판정 일치율이 실측 기준(90%) 이상이고 판정 소요 시간을 잰다")
     void measureMappingAgreement() throws IOException {
         List<MappingCase> cases = allCases();
+        warmUp(cases);
+        List<Long> elapsedNanos = new ArrayList<>();
         List<Verdict> verdicts = new ArrayList<>();
         for (MappingCase mappingCase : cases) {
-            verdicts.add(decide(mappingCase));
+            verdicts.add(decide(mappingCase, elapsedNanos));
         }
         Accuracy accuracy = summarize(verdicts);
-        printCases(verdicts);
-        printReport(accuracy);
+        Timing timing = summarizeTiming(cases, elapsedNanos);
+        printCases(verdicts, elapsedNanos);
+        printReport(accuracy, timing);
 
         assertThat(verdicts).hasSize(EXPECTED_CASE_COUNT);
         assertThat(accuracy.matchPercent())
@@ -47,12 +51,21 @@ class MatchAccuracyTest {
                 .isGreaterThanOrEqualTo(MATCH_FLOOR_PERCENT);
     }
 
+    /** 서버 안정 상태와 같은 조건을 만들려고 전체 케이스를 한 번 미리 돌린 뒤 측정한다. */
+    private void warmUp(List<MappingCase> cases) throws IOException {
+        for (MappingCase mappingCase : cases) {
+            decide(mappingCase, new ArrayList<>());
+        }
+    }
+
     /** 접수 판정과 같은 규칙을 적용한다: 후보 없으면 신규, 있으면 첫 후보가 서비스 판정이다. */
-    private Verdict decide(MappingCase mappingCase) throws IOException {
+    private Verdict decide(MappingCase mappingCase, List<Long> elapsedNanos) throws IOException {
         Path stored = writeStoredFile(mappingCase);
         try {
+            long startedAt = System.nanoTime();
             List<MatchService.Candidate> candidates =
                     matchService.rank(mappingCase.fileName(), stored, registry);
+            elapsedNanos.add(System.nanoTime() - startedAt);
             return judge(mappingCase, candidates);
         } finally {
             Files.deleteIfExists(stored);
@@ -76,19 +89,46 @@ class MatchAccuracyTest {
         return new Accuracy(verdicts.size(), matchedCount, newHits, unrelatedFiles.size());
     }
 
-    private void printReport(Accuracy accuracy) {
+    private void printReport(Accuracy accuracy, Timing timing) {
         System.out.printf("매핑 판정 실측: 전체 %d · 기대 매핑과 판정 일치 %d(%.1f%%) · 무관 문서 신규 판정 %d/%d%n",
                 accuracy.total(), accuracy.matchedCount(), accuracy.matchPercent(),
                 accuracy.newHits(), accuracy.newCount());
+        System.out.printf("매핑 소요 시간: %d건 총 %.0fms · 파일당 평균 %.1fms · 최대 %.1fms(%s) · xlsx 평균 %.1fms%n",
+                accuracy.total(), timing.totalMillis(), timing.avgMillis(),
+                timing.slowestMillis(), timing.slowestFile(), timing.xlsxAvgMillis());
     }
 
-    /** 측정 근거를 파일명 단위로 남긴다: 판정|파일명|기대|판정 결과|근거. */
-    private void printCases(List<Verdict> verdicts) {
-        for (Verdict verdict : verdicts) {
-            System.out.printf("CASE|%s|%s|%s|%s|%s%n", verdict.matchesExpected() ? "일치" : "불일치",
+    /** 측정 근거를 파일명 단위로 남긴다: 판정|파일명|기대|판정 결과|근거|소요ms. */
+    private void printCases(List<Verdict> verdicts, List<Long> elapsedNanos) {
+        for (int index = 0; index < verdicts.size(); index++) {
+            Verdict verdict = verdicts.get(index);
+            System.out.printf("CASE|%s|%s|%s|%s|%s|%.1f%n", verdict.matchesExpected() ? "일치" : "불일치",
                     verdict.mappingCase().fileName(), verdict.expectedLabel(),
-                    verdict.decidedItem(), verdict.evidence());
+                    verdict.decidedItem(), verdict.evidence(), elapsedNanos.get(index) / NANOS_TO_MILLIS);
         }
+    }
+
+    private Timing summarizeTiming(List<MappingCase> cases, List<Long> elapsedNanos) {
+        long totalNanos = 0;
+        long slowestNanos = 0;
+        String slowestFile = "";
+        long xlsxNanos = 0;
+        int xlsxCount = 0;
+        for (int index = 0; index < cases.size(); index++) {
+            long nanos = elapsedNanos.get(index);
+            totalNanos += nanos;
+            if (nanos > slowestNanos) {
+                slowestNanos = nanos;
+                slowestFile = cases.get(index).fileName();
+            }
+            if (cases.get(index).fileName().endsWith(".xlsx")) {
+                xlsxNanos += nanos;
+                xlsxCount++;
+            }
+        }
+        return new Timing(totalNanos / NANOS_TO_MILLIS, totalNanos / cases.size() / NANOS_TO_MILLIS,
+                slowestNanos / NANOS_TO_MILLIS, slowestFile,
+                xlsxCount == 0 ? 0.0 : xlsxNanos / xlsxCount / NANOS_TO_MILLIS);
     }
 
     /** xlsx 는 시트 헤더를 실제로 쓰고(내용 키워드 경로), 나머지 확장자는 내용 추출이 빈 값이다. */
@@ -261,5 +301,9 @@ class MatchAccuracyTest {
         double matchPercent() {
             return total == 0 ? 0.0 : matchedCount * 100.0 / total;
         }
+    }
+
+    private record Timing(double totalMillis, double avgMillis, double slowestMillis,
+                          String slowestFile, double xlsxAvgMillis) {
     }
 }

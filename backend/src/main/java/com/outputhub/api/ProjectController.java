@@ -5,6 +5,7 @@ import com.outputhub.domain.Project;
 import com.outputhub.service.ChecklistItemService;
 import com.outputhub.service.DashboardService;
 import com.outputhub.service.TemplateLoader;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,20 +23,24 @@ public class ProjectController {
     public record CreateRequest(String name, String vendor, String templateStage) {
     }
 
-    public record ItemRequest(String phase, String itemName, boolean required) {
+    public record ItemRequest(String phase, String itemName, boolean required, LocalDate dueDate) {
     }
 
-    /** REQ-outputhub-023: 행마다 업로드된 파일 중 최신본 1개만 내려준다. 전체 버전은 상세 화면(REQ-outputhub-024)에서 본다. */
+    /** REQ-outputhub-023: 행마다 업로드된 파일 중 최신본 1개만 내려준다. 전체 버전은 상세 화면(REQ-outputhub-024)에서 본다.
+     *  REQ-outputhub-028: 마감일(dueDate, 미지정 null)과 지연 여부(overdue)를 함께 내려준다. */
     public record RowView(Long id, String phase, String itemName, boolean required, String status,
                           String supplementReason, int latestVersionNo, String latestVersionLabel,
-                          String latestFileName, String latestDownloadUrl, String evidence) {
+                          String latestFileName, String latestDownloadUrl, String evidence,
+                          LocalDate dueDate, boolean overdue) {
     }
 
     /** 접수함 업로드 드롭다운용 산출물 항목 한 줄(REQ-outputhub-021). */
     public record ItemOptionView(Long id, String phase, String itemName, String status) {
     }
 
-    public record PhaseView(String name, int total, int submitted, int confirmed, int pct, int submittedPct) {
+    /** REQ-outputhub-028: 단계별 지연 건수(overdueCount)를 함께 내려준다. */
+    public record PhaseView(String name, int total, int submitted, int confirmed, int pct, int submittedPct,
+                            int overdueCount) {
     }
 
     public record DashboardView(Project project, int overallPct, int confirmedCount, int totalCount,
@@ -58,13 +63,21 @@ public class ProjectController {
         this.dashboardService = dashboardService;
     }
 
+    /** REQ-outputhub-014: 기본 세팅대로 템플릿 전체 단계 산출물 목록을 자동 등록한다. */
     @PostMapping
-    public Project create(@RequestBody CreateRequest request) {
-        Project saved = projects.save(new Project(request.name(), request.vendor()));
+    public ResponseEntity<?> create(@RequestBody CreateRequest request) {
+        if (request == null || request.name() == null || request.name().isBlank()) {
+            return ResponseEntity.badRequest().body("프로젝트 이름을 입력하세요");
+        }
+        String projectName = request.name().trim();
+        if (projects.existsByName(projectName)) {
+            return ResponseEntity.badRequest().body("같은 이름의 프로젝트가 이미 있습니다");
+        }
+        Project saved = projects.save(new Project(projectName, request.vendor()));
         for (TemplateLoader.TemplateItem template : templates.load(request.templateStage())) {
             items.save(new ChecklistItem(saved, template.phase(), template.name(), template.required()));
         }
-        return saved;
+        return ResponseEntity.ok(saved);
     }
 
     @GetMapping
@@ -102,7 +115,8 @@ public class ProjectController {
         if (request.phase() == null || request.phase().isBlank()) {
             return ResponseEntity.badRequest().body("단계를 선택하세요");
         }
-        return ResponseEntity.ok(itemService.add(id, request.phase(), request.itemName().trim(), request.required()));
+        return ResponseEntity.ok(itemService.add(id, request.phase(), request.itemName().trim(),
+                request.required(), request.dueDate()));
     }
 
     /** 산출물 목록에서 항목을 삭제한다. */

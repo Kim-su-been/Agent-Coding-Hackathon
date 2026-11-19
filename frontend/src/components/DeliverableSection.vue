@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import StatusBadge from "./StatusBadge.vue";
+import { useDueDate } from "../composables/useDueDate";
 import type { ChecklistRow } from "../types/model";
 
 const props = withDefaults(
@@ -17,20 +18,27 @@ const props = withDefaults(
     showStats?: boolean;
     /** 이 단계에서 산출물 항목 추가를 허용할지(PMO 주간보고는 제외) */
     allowAddItem?: boolean;
+    /** 마감일이 지났는데 검토완료가 아닌 행 수(REQ-outputhub-028) */
+    overdueCount?: number;
   }>(),
-  { showStats: true, allowAddItem: true },
+  { showStats: true, allowAddItem: true, overdueCount: 0 },
 );
 
 const emit = defineEmits<{
   (e: "toggle"): void;
   (e: "open-detail", itemId: number): void;
   (e: "remove-item", itemId: number): void;
-  (e: "add-item", body: { phase: string; itemName: string; required: boolean }): void;
+  (e: "add-item", body: { phase: string; itemName: string; required: boolean; dueDate: string | null }): void;
 }>();
 
 const newItemName = ref("");
 const newItemRequired = ref(false);
+const newItemDueDate = ref("");
 const adding = ref(false);
+const { formatDueDate, dueBadge } = useDueDate();
+
+/** 행별 D-day·지연 배지(REQ-outputhub-028). 표본 안의 복잡한 연산은 computed 로 뺀다(STD-001). */
+const dueBadges = computed(() => new Map(props.rows.map((row) => [row.id, dueBadge(row.dueDate, row.overdue)])));
 
 function toggleForm(): void {
   adding.value = !adding.value;
@@ -41,9 +49,11 @@ function submitAdd(): void {
   if (!name) {
     return;
   }
-  emit("add-item", { phase: props.phase, itemName: name, required: newItemRequired.value });
+  emit("add-item", { phase: props.phase, itemName: name, required: newItemRequired.value,
+    dueDate: newItemDueDate.value || null });
   newItemName.value = "";
   newItemRequired.value = false;
+  newItemDueDate.value = "";
   adding.value = false;
 }
 </script>
@@ -56,6 +66,7 @@ function submitAdd(): void {
       <template v-if="props.showStats">
         <span class="count">제출 {{ submitted }}/{{ total }} · {{ submittedPct }}%</span>
         <span class="count">완료 {{ confirmed }}/{{ total }} · {{ pct }}%</span>
+        <span v-if="overdueCount > 0" class="overdue-chip">지연 {{ overdueCount }}종</span>
         <div class="mini-bar"><i :style="{ width: pct + '%' }"></i></div>
       </template>
     </button>
@@ -64,7 +75,7 @@ function submitAdd(): void {
       <table>
         <thead>
           <tr>
-            <th>산출물 항목</th><th>상태</th><th>제출문서</th><th>버전</th><th>동작</th>
+            <th>산출물 항목</th><th>마감일</th><th>상태</th><th>제출문서</th><th>버전</th><th>동작</th>
           </tr>
         </thead>
         <tbody>
@@ -72,6 +83,12 @@ function submitAdd(): void {
             <td>
               {{ row.itemName }}
               <span v-if="row.supplementReason" class="reason">사유: {{ row.supplementReason }}</span>
+            </td>
+            <td>
+              <span class="due-date">{{ formatDueDate(row.dueDate) }}</span>
+              <!-- REQ-outputhub-028: 지연은 빨강 배지, D-day·여유는 D-표기로 남은 일수를 보여 준다 -->
+              <span v-if="dueBadges.get(row.id)" class="due-badge" :class="dueBadges.get(row.id)!.kind">{{
+dueBadges.get(row.id)!.label }}</span>
             </td>
             <td><StatusBadge :status="row.status" /></td>
             <td>
@@ -86,7 +103,7 @@ function submitAdd(): void {
             </td>
           </tr>
           <tr v-if="rows.length === 0">
-            <td colspan="5" class="muted">등록된 산출물이 없습니다</td>
+            <td colspan="6" class="muted">등록된 산출물이 없습니다</td>
           </tr>
         </tbody>
       </table>
@@ -98,6 +115,7 @@ function submitAdd(): void {
           <label class="required-check">
             <input v-model="newItemRequired" type="checkbox" /> 필수
           </label>
+          <input v-model="newItemDueDate" type="date" class="due-input" aria-label="마감일" />
           <button class="primary" @click="submitAdd">추가</button>
           <button @click="toggleForm">취소</button>
         </div>
@@ -135,5 +153,12 @@ button.danger:hover { border-color: var(--red-600); color: var(--red-600); }
 .add-form input::placeholder { color: var(--grey-500); }
 .add-form input:focus { border-bottom-color: var(--blue-600); }
 .required-check { font-size: 14px; color: var(--grey-700); display: flex; align-items: center; gap: 6px; }
+.due-input { border: 1px solid var(--grey-200); border-radius: var(--radius-sm); padding: 7px 10px; font: 400 14px/20px var(--font-sans); color: var(--grey-900); background: var(--surface); }
+.overdue-chip { padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; background: var(--red-50); color: var(--red-600); white-space: nowrap; }
+.due-date { font-variant-numeric: tabular-nums; color: var(--grey-700); }
+.due-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.due-badge.overdue { background: var(--red-50); color: var(--red-600); }
+.due-badge.today { background: var(--blue-50); color: var(--blue-600); }
+.due-badge.normal { background: var(--grey-100); color: var(--grey-500); }
 .muted { color: var(--grey-400); }
 </style>

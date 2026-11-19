@@ -1,5 +1,5 @@
 import { computed, ref } from "vue";
-import { fetchDashboard, listProjects } from "../api/client";
+import { createProject as apiCreateProject, fetchDashboard, listProjects } from "../api/client";
 import type { DashboardView, Project } from "../types/model";
 
 /* 화면을 넘나드는 프로젝트 선택 상태(모듈 단일 상태) */
@@ -40,6 +40,15 @@ async function selectProject(): Promise<void> {
   await loadDashboard();
 }
 
+/** 프로젝트를 추가하고 목록을 다시 내려받아 방금 추가한 프로젝트 대시보드로 전환한다(REQ-outputhub-014). */
+async function addProject(body: { name: string; vendor: string }): Promise<Project> {
+  const project = await apiCreateProject(body);
+  projects.value = await listProjects();
+  selectedProjectId.value = project.id;
+  await loadDashboard();
+  return project;
+}
+
 export function useProjects() {
-  return { projects, selectedProjectId, selectedProject, dashboard, loading, error, loadProjects, loadDashboard, selectProject };
+  return { projects, selectedProjectId, selectedProject, dashboard, loading, error, loadProjects, loadDashboard, selectProject, addProject };
 }

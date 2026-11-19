@@ -1,6 +1,7 @@
 package com.outputhub.domain;
 
 import jakarta.persistence.Entity;
+import java.time.LocalDate;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -67,14 +68,22 @@ public class ChecklistItem {
 
     private String supplementReason;
 
+    /** 마감일(REQ-outputhub-028). 미지정(null)이면 지연 판정에서 제외한다(주간보고처럼 주기 접수 항목). */
+    private LocalDate dueDate;
+
     protected ChecklistItem() {
     }
 
     public ChecklistItem(Project project, String phase, String itemName, boolean required) {
+        this(project, phase, itemName, required, null);
+    }
+
+    public ChecklistItem(Project project, String phase, String itemName, boolean required, LocalDate dueDate) {
         this.project = project;
         this.phase = phase;
         this.itemName = itemName;
         this.required = required;
+        this.dueDate = dueDate;
     }
 
     /** BD-outputhub-P01 §3(L-outputhub-006): 허용 전환 외에는 거부한다. */
@@ -137,6 +146,15 @@ public class ChecklistItem {
 
     public Status getStatus() {
         return status;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    /** 마감일을 바꾼다(REQ-outputhub-028). null 이면 미지정으로 돌아간다. */
+    public void changeDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
     }
 
     public String getSupplementReason() {

@@ -6,10 +6,11 @@ import {
   exportDashboardUrl,
   exportDeliverablesUrl,
 } from "../api/client";
+import AddProjectModal from "../components/AddProjectModal.vue";
 import DeliverableSection from "../components/DeliverableSection.vue";
 import ProgressPanel from "../components/ProgressPanel.vue";
 import { useProjects } from "../composables/useProjects";
-import type { ChecklistRow, PhaseProgress } from "../types/model";
+import type { ChecklistRow, PhaseProgress, Project } from "../types/model";
 
 const emit = defineEmits<{ (e: "open-detail", itemId: number): void; (e: "open-inbox"): void }>();
 
@@ -18,6 +19,7 @@ const { projects, selectedProjectId, dashboard, loading, error, loadProjects, lo
 
 const expandedPhases = ref<Record<string, boolean>>({});
 const message = ref("");
+const showAddProject = ref(false);
 
 interface PhaseBucket {
   phase: PhaseProgress;
@@ -34,7 +36,7 @@ const phaseBuckets = computed<PhaseBucket[]>(() => {
     let bucket = byName.get(row.phase);
     if (!bucket) {
       // 통계에서 제외된 단계(예: PMO 주간보고)는 목록에는 그대로 보여준다
-      const excluded: PhaseProgress = { name: row.phase, total: 0, submitted: 0, confirmed: 0, pct: 0, submittedPct: 0 };
+      const excluded: PhaseProgress = { name: row.phase, total: 0, submitted: 0, confirmed: 0, pct: 0, submittedPct: 0, overdueCount: 0 };
       bucket = { phase: excluded, rows: [] };
       byName.set(row.phase, bucket);
       buckets.push(bucket);
@@ -73,7 +75,7 @@ async function onRemoveItem(itemId: number): Promise<void> {
   }
 }
 
-async function onAddItem(body: { phase: string; itemName: string; required: boolean }): Promise<void> {
+async function onAddItem(body: { phase: string; itemName: string; required: boolean; dueDate: string | null }): Promise<void> {
   if (selectedProjectId.value === null) {
     return;
   }
@@ -84,6 +86,15 @@ async function onAddItem(body: { phase: string; itemName: string; required: bool
   } catch (e) {
     message.value = e instanceof Error ? e.message : "추가에 실패했습니다";
   }
+}
+
+function openAddProject(): void {
+  showAddProject.value = true;
+}
+
+function onProjectCreated(project: Project): void {
+  showAddProject.value = false;
+  message.value = `${project.name} 프로젝트를 추가했습니다. 기본 산출물 목록과 대시보드가 세팅되었습니다`;
 }
 
 onMounted(async () => {
@@ -100,6 +111,7 @@ onMounted(async () => {
           {{ project.name }}
         </option>
       </select>
+      <button @click="openAddProject">+ 프로젝트 추가</button>
       <button class="primary" @click="emit('open-inbox')">+ 파일 업로드</button>
       <a :href="selectedProjectId ? exportDashboardUrl(selectedProjectId) : '#'" class="button">대시보드 내보내기</a>
       <a :href="selectedProjectId ? exportDeliverablesUrl(selectedProjectId) : '#'" class="button">산출물 다운로드</a>
@@ -142,6 +154,7 @@ onMounted(async () => {
           :expanded="isOpen(bucket.phase.name)"
           :show-stats="isStatsPhase(bucket.phase.name)"
           :allow-add-item="bucket.phase.name !== 'PMO'"
+          :overdue-count="bucket.phase.overdueCount"
           @toggle="togglePhase(bucket.phase.name)"
           @open-detail="(id: number) => emit('open-detail', id)"
           @remove-item="onRemoveItem"
@@ -149,6 +162,12 @@ onMounted(async () => {
         />
       </div>
     </template>
+
+    <AddProjectModal
+      :visible="showAddProject"
+      @close="showAddProject = false"
+      @created="onProjectCreated"
+    />
   </section>
 </template>
 

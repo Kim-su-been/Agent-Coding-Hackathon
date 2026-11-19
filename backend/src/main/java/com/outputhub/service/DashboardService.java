@@ -8,26 +8,38 @@ import com.outputhub.domain.Deliverable;
 import com.outputhub.domain.Project;
 import com.outputhub.domain.Version;
 import com.outputhub.domain.VersionNaming;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 대시보드 집계(REQ-outputhub-006·016): 전체·단계별 완료율을 모두 검토완료 기준으로 계산한다(사용자 요구 2026-11-19). */
+/** 대시보드 집계(REQ-outputhub-006·016): 전체·단계별 완료율을 모두 검토완료 기준으로 계산한다(사용자 요구 2026-11-19).
+ *  마감일·지연 표시(REQ-outputhub-028): 행별 마감일과 지연 여부, 단계별 지연 건수를 함께 계산한다(사용자 요구 2026-11-19). */
 @Service
 public class DashboardService {
 
     private final ChecklistItem.Repository items;
     private final Deliverable.Repository deliverables;
     private final Version.Repository versions;
+    private final LocalDate today;
 
+    @Autowired
     public DashboardService(ChecklistItem.Repository items, Deliverable.Repository deliverables,
                             Version.Repository versions) {
+        this(items, deliverables, versions, LocalDate.now());
+    }
+
+    /** 테스트용: 기준 날짜를 고정해 지연 판정을 검증할 수 있게 한다. */
+    DashboardService(ChecklistItem.Repository items, Deliverable.Repository deliverables,
+                     Version.Repository versions, LocalDate today) {
         this.items = items;
         this.deliverables = deliverables;
         this.versions = versions;
+        this.today = today;
     }
 
     @Transactional(readOnly = true)
@@ -49,13 +61,24 @@ public class DashboardService {
             long submitted = phaseRows.stream().filter(ChecklistItem::isReceived).count();
             long confirmed = countStatus(phaseRows, ChecklistItem.Status.CONFIRMED);
             phases.add(new PhaseView(entry.getKey(), phaseRows.size(), (int) submitted, (int) confirmed,
-                    percentage(confirmed, phaseRows.size()), percentage(submitted, phaseRows.size())));
+                    percentage(confirmed, phaseRows.size()), percentage(submitted, phaseRows.size()),
+                    (int) countOverdue(phaseRows)));
         }
         return phases;
     }
 
     private long countStatus(List<ChecklistItem> rows, ChecklistItem.Status status) {
         return rows.stream().filter(row -> row.getStatus() == status).count();
+    }
+
+    /** REQ-outputhub-028: 마감일이 지났는데 아직 검토완료가 아니면 지연이다. 마감일 미지정 행은 판정에서 제외한다. */
+    private boolean isOverdue(ChecklistItem row) {
+        return row.getDueDate() != null && row.getStatus() != ChecklistItem.Status.CONFIRMED
+                && row.getDueDate().isBefore(today);
+    }
+
+    private long countOverdue(List<ChecklistItem> rows) {
+        return rows.stream().filter(this::isOverdue).count();
     }
 
     /** 상태 배지(사용자 요구 2026-11-19): 미제출·검토 필요·보완 필요·검토완료 건수를 항상 4개로 표시한다. */
@@ -97,7 +120,7 @@ public class DashboardService {
         return new RowView(row.getId(), row.getPhase(), row.getItemName(), row.isRequired(),
                 row.getStatus().label(), row.getSupplementReason(), versionNo,
                 versionNo > 0 ? VersionNaming.format(versionNo) : null,
-                fileName, downloadUrl, null);
+                fileName, downloadUrl, null, row.getDueDate(), isOverdue(row));
     }
 
     private Map<String, List<ChecklistItem>> groupByPhase(List<ChecklistItem> rows) {

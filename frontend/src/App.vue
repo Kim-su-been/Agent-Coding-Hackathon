@@ -37,15 +37,17 @@ function backFromDetail(): void {
 
 <template>
   <header class="topbar">
-    <div class="brand" title="대시보드로 이동" @click="backToDashboard">
-      <img class="mascot" src="./assets/character-ggumi.png" alt="꾸미 캐릭터" />
-      <h1>프로젝트 산출물 검토 보드</h1>
+    <div class="topbar-inner">
+      <div class="brand" title="대시보드로 이동" @click="backToDashboard">
+        <img class="mascot" src="./assets/character-ggumi.png" alt="꾸미 캐릭터" />
+        <h1>프로젝트 산출물 검토 보드</h1>
+      </div>
+      <nav>
+        <button :class="{ active: screen === 'dashboard' }" @click="backToDashboard">대시보드</button>
+        <button :class="{ active: screen === 'inbox' }" @click="openInbox">제출 파일함</button>
+        <button :class="{ active: screen === 'reviewQueue' }" @click="openReviewQueue">검토 파일 모음</button>
+      </nav>
     </div>
-    <nav>
-      <button :class="{ active: screen === 'dashboard' }" @click="backToDashboard">대시보드</button>
-      <button :class="{ active: screen === 'inbox' }" @click="openInbox">제출 파일함</button>
-      <button :class="{ active: screen === 'reviewQueue' }" @click="openReviewQueue">검토 파일 모음</button>
-    </nav>
   </header>
   <main>
     <Dashboard v-if="screen === 'dashboard'" @open-detail="openDetail" @open-inbox="openInbox" />
@@ -58,12 +60,13 @@ function backFromDetail(): void {
 <style>
 * { box-sizing: border-box; }
 body { font-family: var(--font-sans); margin: 0; background: var(--bg-page); color: var(--grey-900); line-height: 1.5; }
-.topbar { display: flex; align-items: center; justify-content: space-between; background: var(--surface); color: var(--grey-900); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--grey-200); }
+.topbar { background: var(--surface); color: var(--grey-900); border-bottom: 1px solid var(--grey-200); }
+.topbar-inner { display: flex; align-items: center; justify-content: space-between; max-width: var(--page-max); margin: 0 auto; padding: var(--space-4) var(--space-6); }
 .topbar h1 { font: 800 var(--title-brand) var(--font-sans); margin: 0; }
 .topbar .brand { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
 .topbar .mascot { height: 44px; }
 .topbar nav button { margin-left: var(--space-2); padding: 10px 16px; border: none; border-radius: var(--radius-sm); background: var(--grey-100); color: var(--grey-700); font: 600 15px/22px var(--font-sans); cursor: pointer; }
 .topbar nav button.active { background: var(--blue-50); color: var(--blue-600); }
 .topbar nav button:disabled { opacity: 0.5; cursor: not-allowed; }
-main { padding: var(--space-6); }
+main { max-width: var(--page-max); margin: 0 auto; padding: var(--space-6); }
 </style>

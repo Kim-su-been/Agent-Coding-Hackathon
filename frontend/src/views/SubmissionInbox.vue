@@ -240,16 +240,6 @@ async function reject(s: SuggestionCardView): Promise<void> {
       <p class="msg">{{ message }}</p>
     </div>
 
-    <div v-if="progressList.length" class="progress-list">
-      <h3>검토 대기 제안</h3>
-      <p class="hint">수락해도 이 화면에 머물므로 여러 파일을 하나씩 처리할 수 있습니다</p>
-      <ul>
-        <li v-for="p in progressList" :key="p.suggestionId">
-          {{ p.fileName }} — {{ p.verdict }}
-        </li>
-      </ul>
-    </div>
-
     <article v-for="(s, index) in suggestions" :key="s.suggestionId ?? `dup-${index}`" class="card">
       <header>
         <span class="verdict" :class="verdictClass(s.verdict)">{{ s.verdict }}</span>
@@ -304,9 +294,6 @@ async function reject(s: SuggestionCardView): Promise<void> {
 .dropzone .pick { text-align: left; font-size: 15px; line-height: 22px; }
 .pick input { margin-right: var(--space-2); }
 .msg { color: var(--blue-600); }
-.progress-list ul { margin: var(--space-1) 0 0; padding-left: 18px; }
-.progress-list h3 { font: 700 var(--subtitle); margin: 0; }
-.progress-list .hint { margin: var(--space-1) 0 0; color: var(--grey-500); font-size: 13px; line-height: 20px; }
 .card { background: var(--surface); border: 1px solid var(--grey-200); border-radius: var(--radius-md); padding: var(--space-5); margin-top: var(--space-4); box-shadow: var(--shadow-card); }
 .card header strong { font-size: 17px; line-height: 26px; }
 .verdict { display: inline-block; padding: 4px 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; margin-right: var(--space-2); }

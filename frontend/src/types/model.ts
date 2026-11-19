@@ -16,6 +16,8 @@ export interface PhaseProgress {
   pct: number;
   /** 제출 기준 완료율 */
   submittedPct: number;
+  /** 마감일이 지났는데 검토완료가 아닌 행 수(REQ-outputhub-028) */
+  overdueCount: number;
 }
 
 export interface ChecklistRow {
@@ -32,6 +34,10 @@ export interface ChecklistRow {
   latestFileName: string | null;
   latestDownloadUrl: string | null;
   evidence: string | null;
+  /** 기준 마감일(REQ-outputhub-028, ISO yyyy-MM-dd). 미지정(주기 접수 항목 등)이면 null */
+  dueDate: string | null;
+  /** 마감일이 지났는데 검토완료가 아니면 true(REQ-outputhub-028) */
+  overdue: boolean;
 }
 
 export interface DashboardView {
@@ -113,6 +119,8 @@ export interface ItemDetail {
   required: boolean;
   status: ItemStatus;
   supplementReason: string | null;
+  /** 기준 마감일(ISO yyyy-MM-dd). 미지정이면 null(REQ-outputhub-028) */
+  dueDate: string | null;
   versions: VersionView[];
   audits: AuditView[];
 }

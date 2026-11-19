@@ -6,8 +6,11 @@ import com.outputhub.domain.Deliverable;
 import com.outputhub.domain.MatchSuggestion;
 import com.outputhub.domain.Version;
 import com.outputhub.domain.VersionNaming;
+import com.outputhub.service.ChecklistItemService;
 import com.outputhub.service.VersionRegistrationService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class DeliverableController {
 
     public record ItemDetail(Long itemId, String phase, String itemName, boolean required, String status,
-                             String supplementReason, List<VersionView> versions, List<AuditView> audits) {
+                             String supplementReason, String dueDate, List<VersionView> versions,
+                             List<AuditView> audits) {
     }
 
     public record VersionView(Long versionId, int versionNo, String versionLabel, String fileName, boolean old,
@@ -35,6 +39,10 @@ public class DeliverableController {
     public record SupplementRequest(String reason) {
     }
 
+    /** 마감일 수정 요청: "yyyy-MM-dd" 또는 null(미지정 해제). */
+    public record DueDateRequest(String dueDate) {
+    }
+
     /** 상태 변경 응답(JSON): 라벨 문자열을 그대로 내보내면 프론트 파싱이 깨진다. */
     public record StatusResponse(String status) {
     }
@@ -45,16 +53,19 @@ public class DeliverableController {
     private final MatchSuggestion.Repository suggestions;
     private final AuditLog.Repository audits;
     private final VersionRegistrationService versionRegistration;
+    private final ChecklistItemService itemService;
 
     public DeliverableController(ChecklistItem.Repository items, Deliverable.Repository deliverables,
                                  Version.Repository versions, MatchSuggestion.Repository suggestions,
-                                 AuditLog.Repository audits, VersionRegistrationService versionRegistration) {
+                                 AuditLog.Repository audits, VersionRegistrationService versionRegistration,
+                                 ChecklistItemService itemService) {
         this.items = items;
         this.deliverables = deliverables;
         this.versions = versions;
         this.suggestions = suggestions;
         this.audits = audits;
         this.versionRegistration = versionRegistration;
+        this.itemService = itemService;
     }
 
     @Transactional(readOnly = true)
@@ -78,7 +89,28 @@ public class DeliverableController {
                 .map(a -> new AuditView(a.getId(), a.getAction(), a.getDetail(), a.getActor(), a.getAt().toString()))
                 .toList();
         return ResponseEntity.ok(new ItemDetail(itemId, item.getPhase(), item.getItemName(), item.isRequired(),
-                item.getStatus().label(), item.getSupplementReason(), versionViews, auditViews));
+                item.getStatus().label(), item.getSupplementReason(),
+                item.getDueDate() == null ? null : item.getDueDate().toString(), versionViews, auditViews));
+    }
+
+    /** 상세 화면에서 마감일을 수정한다. null 이면 미지정으로 해제하고, 변경 내역은 감사 이력에 남는다. */
+    @Transactional
+    @PostMapping("/api/deliverables/{itemId}/due-date")
+    public ResponseEntity<?> changeDueDate(@PathVariable Long itemId, @RequestBody DueDateRequest request) {
+        LocalDate dueDate = null;
+        if (request != null && request.dueDate() != null && !request.dueDate().isBlank()) {
+            try {
+                dueDate = LocalDate.parse(request.dueDate().trim());
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest().body("마감일은 yyyy-MM-dd 형식으로 입력하세요");
+            }
+        }
+        try {
+            itemService.changeDueDate(itemId, dueDate);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+        return ResponseEntity.ok(new StatusResponse(items.findById(itemId).map(i -> i.getStatus().label()).orElse("")));
     }
 
     /** REQ-outputhub-010: 확정은 접수 상태에서만 가능하다. REQ-outputhub-022: 확정 시 최신본 파일명을 v1.0으로 바꾼다. */
