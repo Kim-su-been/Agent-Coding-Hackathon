@@ -1,0 +1,60 @@
+/*
+ * 토스 디자인 가이드 기준 디자인 토큰.
+ * 색상·간격·반경·타이포는 이 파일의 변수로만 쓰고, 컴포넌트에 하드코딩하지 않는다.
+ * 근거: 토스_디자인_가이드.md (grey/blue/red 색상표, 4px 간격, 반경 8~12px, 타이포 위계)
+ */
+:root {
+  /* 회색 계열 — 텍스트·경계·배경 (명도로 위계 구분) */
+  --grey-900: #191f28; /* 본문·강조 텍스트 */
+  --grey-700: #4e5968; /* 보조 텍스트 */
+  --grey-500: #8b95a1; /* 안내 문구·플레이스홀더 */
+  --grey-400: #b0b8c1; /* 비활성 텍스트·아이콘 */
+  --grey-200: #e5e8eb; /* 경계선 */
+  --grey-100: #f2f4f6; /* 연한 배경·보조 버튼 배경 */
+  --grey-50: #f9fafb; /* 화면 배경 */
+
+  /* 파랑 계열 — Primary 는 한 화면의 가장 중요한 동작 하나에만 */
+  --blue-600: #3182f6; /* 주요 버튼·링크·활성 상태 */
+  --blue-700: #1b64da; /* Primary hover(어두운 파랑) */
+  --blue-50: #e8f3ff; /* 파란 강조 배경 */
+
+  /* 빨강 계열 — 경고·오류 통일, 표현은 부드럽게 */
+  --red-600: #f04452;
+  --red-50: #feecec; /* 빨강 연한 배경(가이드 기본색에서 유도) */
+
+  /* 초록 계열 — 성공 상태(가이드 색상표에 없어 상태 구분을 위해 추가) */
+  --green-600: #0e9355;
+  --green-50: #e8f8f0;
+
+  /* 배경·표면 */
+  --bg-page: var(--grey-50); /* 화면 배경은 밝은 회색 */
+  --surface: #ffffff; /* 카드·시트·모달은 흰색 */
+
+  /* 간격 — 기본 단위 4px, 4의 배수만 사용 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* 모서리 반경 — 버튼 8px, 카드 12~16px */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* 그림자 — 카드를 흰 배경 위에서 살짝 띄우는 정도 */
+  --shadow-card: 0 1px 3px rgba(25, 31, 40, 0.08);
+
+  /* 서체 — 프리텐다드 우선(styles/fonts.css 로컬 폰트), 시스템 폰트는 대체용, 행간 1.4~1.6배 */
+  --font-sans: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Noto Sans KR", Roboto, "Malgun Gothic", sans-serif;
+
+  /* 타이포 위계 */
+  --title1: 24px / 34px; /* 화면 최상단 큰 제목, Bold */
+  --title-brand: 32px / 44px; /* 상단 브랜드 타이틀(좌측 상단 프로젝트명), ExtraBold — 사용자 요청으로 28→32px 확대 */
+  --title2: 22px / 30px; /* 섹션 제목, Bold */
+  --subtitle: 18px / 26px; /* 소제목, Bold */
+  --body1: 17px / 26px; /* 기본 본문, Regular */
+  --body2: 15px / 22px; /* 보조 본문·리스트, Regular */
+}

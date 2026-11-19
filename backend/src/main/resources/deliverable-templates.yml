@@ -1,0 +1,40 @@
+# 프로젝트별 기본 산출물 목록 템플릿(REQ-outputhub-014).
+# 단계(stage) 순서가 곧 대시보드 표시 순서다. required: 필수 여부.
+templates:
+  - stage: 착수
+    items:
+      - { name: 사업수행계획서, required: true }
+      - { name: WBS, required: true }
+      - { name: 인력투입계획서, required: true }
+      - { name: 착수보고서, required: true }
+  - stage: 분석
+    items:
+      - { name: 요구사항 정의서, required: true }
+      - { name: 요구사항 추적표, required: true }
+  - stage: 설계
+    items:
+      - { name: 시스템 구성도, required: true }
+      - { name: 기능 설계서, required: true }
+      - { name: 화면 설계서, required: true }
+      - { name: DB 설계서(ERD), required: true }
+      - { name: 인터페이스 정의서, required: true }
+  - stage: 개발
+    items:
+      - { name: 단위테스트 결과서, required: true }
+      - { name: 소스/빌드 안내서, required: true }
+  - stage: 테스트
+    items:
+      - { name: 테스트 계획서, required: true }
+      - { name: 통합테스트 시나리오, required: true }
+      - { name: 통합테스트 결과서, required: true }
+      - { name: 보안/점검 조치 결과서, required: true }
+  - stage: 인수인계 및 종료
+    items:
+      - { name: 사용자 매뉴얼, required: true }
+      - { name: 운영자 매뉴얼, required: true }
+      - { name: 운영 인수인계서, required: true }
+      - { name: 종료 보고서, required: true }
+      - { name: 검수 확인서, required: true }
+  - stage: PMO
+    items:
+      - { name: 주간보고서, required: true }

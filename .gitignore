@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# H2 runtime lock
+data/*.lock.db

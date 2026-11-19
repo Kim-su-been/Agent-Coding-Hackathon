@@ -1,0 +1,57 @@
+# 규칙 기반 매칭 키워드(REQ-outputhub-004·014).
+# name 은 기준대장 산출물 항목 이름과 정확히 같아야 하고, keywords 는 파일명·문서 내용에서 찾을 어휘다.
+rules:
+  - name: 사업수행계획서
+    keywords: [수행계획, 사업수행]
+  - name: WBS
+    keywords: [wbs]
+  - name: 인력투입계획서
+    keywords: [인력투입, 투입계획]
+  - name: 착수보고서
+    keywords: [착수보고, 착수]
+  - name: 요구사항 정의서
+    keywords: [요구사항정의, 요구사항 정의, 정의서]
+  - name: 요구사항 추적표
+    keywords: [추적표, 요구사항추적]
+  - name: 시스템 구성도
+    keywords: [시스템구성도, 구성도]
+  - name: 기능 설계서
+    keywords: [기능설계, 기능 정의서]
+  - name: 화면 설계서
+    keywords: [화면설계, ui설계, 화면 정의서]
+  - name: DB 설계서(ERD)
+    keywords: [erd, db설계, db 설계, 데이터베이스설계]
+  - name: 인터페이스 정의서
+    keywords: [인터페이스, 인터페이스정의, if정의서]
+  - name: 단위테스트 결과서
+    keywords: [단위테스트, 단위 시험]
+  - name: 소스/빌드 안내서
+    keywords: [빌드, 소스, 배포안내]
+  - name: 테스트 계획서
+    keywords: [테스트계획, 시험계획]
+  - name: 통합테스트 시나리오
+    keywords: [시나리오, 통합테스트 시나리오]
+  - name: 통합테스트 결과서
+    keywords: [통합테스트결과, 테스트결과, 결과보고]
+  - name: 보안/점검 조치 결과서
+    keywords: [보안, 점검, 취약점]
+  - name: 사용자 매뉴얼
+    keywords: [사용자매뉴얼, 사용자 메뉴얼, 사용자 안내서]
+  - name: 운영자 매뉴얼
+    keywords: [운영자매뉴얼, 운영자 메뉴얼, 운영 매뉴얼, 운영자 안내서]
+  - name: 운영 인수인계서
+    keywords: [인수인계, 인계서]
+  - name: 종료 보고서
+    keywords: [종료보고, 종료]
+  - name: 검수 확인서
+    keywords: [검수, 확인서]
+  - name: 주간보고서
+    keywords: [주간보고, 주간]
+
+matching:
+  filename-score: 3
+  content-score: 2
+  # 하이브리드 매칭(REQ-outputhub-004): 파일명 2-gram TF-IDF 코사인 유사도를
+  # 키워드 점수에 더한다. 코사인 1.0 일 때 vector-weight 점이며, vector-threshold 미만은 0점.
+  vector-weight: 4
+  vector-threshold: 0.3

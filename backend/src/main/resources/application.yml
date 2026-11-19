@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:../data/outputhub;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 200MB
+
+outputhub:
+  storage-root: ../storage
+
+server:
+  port: 8080

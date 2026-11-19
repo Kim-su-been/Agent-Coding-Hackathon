@@ -1,0 +1,11 @@
+/*
+ * 프리텐다드 가변 폰트 — 프로젝트 로컬 에셋으로 두어 오프라인 데모에서도 동일한 서체를 쓴다.
+ * 근거: 사용자 요청(전 화면 서체를 프리텐다드로). 가변 폰트라 굵기 45~920 전 구간 지원.
+ */
+@font-face {
+  font-family: "Pretendard Variable";
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  src: url("../assets/fonts/PretendardVariable.woff2") format("woff2-variations");
+}
