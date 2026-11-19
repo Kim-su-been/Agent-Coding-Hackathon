@@ -1,6 +1,14 @@
 # Agent-Coding-Hackathon
 
-산출물 접수·검토 보드(outputhub) MVP. 백엔드: Spring Boot + H2(`backend/`), 프론트: Vue 3 + TS(`frontend/`), 검증 래퍼·문서 참조 검사기(`tools/`).
+산출물 접수·검토 보드(outputhub) MVP. 백엔드: Spring Boot + H2(`backend/`), 프론트: Vue 3 + TS(`frontend/`), 검증 래퍼·문서 참조 검사기(`tools/`), 문서·발표자료(`docs/`).
+
+## 문서·발표자료(`docs/`)
+
+- `발표자료_동양생명_김수빈.html`, `발표자료_정리.md` — 발표 자료
+- `매핑정확도_검증결과.md` — 매핑 정확도 검증 결과
+- `토스_디자인_가이드.md` — 프론트 디자인 참고 가이드
+- `Agent_Instructions.md` — 해커톤 과제 지침 원본
+- `character*.PNG`, `color.PNG`, `수호천사동양생명.png`, `우리금융그룹.png`, `캡처.PNG` — 발표·디자인 참고 이미지
 
 ## 데모 실행(파일 하나)
 
