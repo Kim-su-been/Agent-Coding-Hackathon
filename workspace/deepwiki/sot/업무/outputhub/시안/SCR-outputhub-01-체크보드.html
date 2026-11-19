@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>체크 보드 시안</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Malgun Gothic", "Noto Sans KR", sans-serif; background: #f4f6f8; color: #1f2933; padding: 24px; }
+  .wrap { max-width: 1080px; margin: 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; }
+  header { padding: 20px 28px 12px; border-bottom: 1px solid #e4e7eb; display: flex; justify-content: space-between; align-items: flex-start; }
+  h1 { font-size: 20px; }
+  .sub { color: #616e7c; font-size: 13px; margin-top: 4px; }
+  .progress { text-align: right; }
+  .pct { font-size: 24px; font-weight: 700; color: #0b5cad; }
+  .pct small { font-size: 12px; color: #616e7c; font-weight: 400; }
+  .bar { width: 160px; height: 8px; background: #e4e7eb; border-radius: 4px; margin-top: 6px; }
+  .bar i { display: block; height: 100%; width: 80%; background: #0b5cad; border-radius: 4px; }
+  .badges { padding: 14px 28px; display: flex; gap: 8px; border-bottom: 1px solid #e4e7eb; }
+  .badge { padding: 6px 12px; border-radius: 16px; font-size: 13px; font-weight: 600; }
+  .b1 { background: #e6f4ea; color: #137333; }
+  .b2 { background: #fce8e6; color: #c5221f; }
+  .b3 { background: #fef7e0; color: #b06000; }
+  .toolbar { padding: 12px 28px; display: flex; gap: 8px; justify-content: flex-end; }
+  .btn { border: 1px solid #cbd2d9; background: #fff; border-radius: 6px; padding: 7px 14px; font-size: 13px; }
+  .btn.p { background: #0b5cad; border-color: #0b5cad; color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; background: #f8fafb; color: #52606d; padding: 10px 12px; border-bottom: 1px solid #e4e7eb; font-weight: 600; white-space: nowrap; }
+  td { padding: 11px 12px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+  .st { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .s-acc { background: #e6f4ea; color: #137333; }
+  .s-mis { background: #e4e7eb; color: #52606d; }
+  .s-fix { background: #dce9f7; color: #0b5cad; }
+  .s-supp { background: #fef7e0; color: #b06000; }
+  .s-new { background: #f3e8ff; color: #6941c6; }
+  .reason { color: #b06000; font-size: 12px; margin-top: 4px; }
+  .evi { color: #616e7c; font-size: 12px; }
+  .file { color: #0b5cad; }
+  .muted { color: #9aa5b1; }
+  .foot { padding: 12px 28px; color: #9aa5b1; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>체크 보드 — 2026-001 Day1 계약 품의</h1>
+      <div class="sub">수행사: A수행사 · 단계: 계약품의 · PMO</div>
+    </div>
+    <div class="progress">
+      <div class="pct">80% <small>(접수 4 / 필수 5종)</small></div>
+      <div class="bar"><i></i></div>
+    </div>
+  </header>
+  <div class="badges">
+    <span class="badge b1">필수 5종 중 4종 접수</span>
+    <span class="badge b2">1종 미제출</span>
+    <span class="badge b3">1종 보완 필요</span>
+  </div>
+  <div class="toolbar">
+    <button class="btn">엑셀 내보내기</button>
+    <button class="btn">폴더 내보내기</button>
+    <button class="btn p">+ 파일 업로드</button>
+  </div>
+  <table>
+    <tr><th>산출물 항목</th><th>필수</th><th>상태</th><th>최신본</th><th>버전</th><th>접수일</th><th>매칭 근거</th><th>동작</th></tr>
+    <tr>
+      <td>견적서</td><td>예</td>
+      <td><span class="st s-fix">확정</span></td>
+      <td><span class="file">견적서_v2.pdf</span></td><td>v2</td><td>2026-01-15</td>
+      <td class="evi">파일명 키워드 "견적서"</td>
+      <td><button class="btn">상세</button></td>
+    </tr>
+    <tr>
+      <td>사업수행계획서</td><td>예</td>
+      <td><span class="st s-supp">보완 필요</span>
+        <div class="reason">사유: 투입 인력 산근 누락</div></td>
+      <td><span class="file">사업수행계획서_v1.pdf</span></td><td>v1</td><td>2026-01-15</td>
+      <td class="evi">파일명 키워드 "수행계획"</td>
+      <td><button class="btn">상세</button> <button class="btn">재접수 안내</button></td>
+    </tr>
+    <tr>
+      <td>인력투입계획</td><td>예</td>
+      <td><span class="st s-mis">미제출</span></td>
+      <td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td>
+      <td><button class="btn p">업로드</button></td>
+    </tr>
+    <tr>
+      <td>WBS</td><td>예</td>
+      <td><span class="st s-acc">접수</span></td>
+      <td><span class="file">WBS.xlsx</span></td><td>v1</td><td>2026-01-16</td>
+      <td class="evi">파일명 키워드 "WBS"</td>
+      <td><button class="btn">상세</button> <button class="btn">확정</button></td>
+    </tr>
+    <tr>
+      <td>기술협상리스트</td><td>예</td>
+      <td><span class="st s-acc">접수</span></td>
+      <td><span class="file">기술협상리스트.hwp</span></td><td>v1</td><td>2026-01-16</td>
+      <td class="evi">파일명 키워드 "협상"</td>
+      <td><button class="btn">상세</button> <button class="btn">확정</button></td>
+    </tr>
+    <tr>
+      <td>합의서(스캔본)</td><td>아니오</td>
+      <td><span class="st s-new">신규(자동등록) 승인 대기</span></td>
+      <td><span class="file">합의서_스캔본.pdf</span></td><td class="muted">—</td><td>2026-01-16</td>
+      <td class="evi">대장 후보 없음 → 자동등록 제안</td>
+      <td><button class="btn">승인</button> <button class="btn">반려</button></td>
+    </tr>
+  </table>
+  <div class="foot">HTML 시안 — 제품 구현 증거 아님 · 화면정의서 SCR-outputhub-P01 첨부용</div>
+</div>
+</body>
+</html>
